@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mamnon/Account/LoginScreen.dart';
+import 'package:nhakhach/Account/LoginScreen.dart';
 
 void main() {
   runApp(const MyApp());

@@ -238,6 +238,8 @@ const int kSceneTypeBLE = 0;
 const int kSceneTypeHC = 1;
 const int kSceneTypeDevice = 2;
 
+enum MealStatus { pending, approved, rejected }
+
 // ENUM
 enum SettingMode { normal, admin, agency }
 
