@@ -1,20 +1,15 @@
-import 'dart:developer';
 import 'dart:io';
 import 'dart:math';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:nhakhach/Data/DataModel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../Common/notification_center.dart';
-import 'package:fast_image_resizer/fast_image_resizer.dart';
 import 'package:http/http.dart' as http;
-import 'package:image_picker/image_picker.dart';
-import 'package:path_provider/path_provider.dart';
 import 'dart:convert';
-import 'package:flutter/foundation.dart' show Uint8List, kIsWeb;
 import '../Common/OverlayLoadingProgress.dart';
 import 'Constants.dart';
 import 'DataManager.dart';
 import 'Functions.dart';
+
 
 class APIManager {
   static final APIManager _instance = APIManager._internal();
@@ -27,26 +22,50 @@ class APIManager {
     // initialization logic
   }
 
-  Future<Map<String, dynamic>> callAPI(BuildContext? context, String path, TypeAPI typeAPI, Map<String, dynamic>? body, {String sender = "", int timeInput = 0, bool isPostAPI = true}) async {
-    int time = timeInput != 0 ? timeInput : DateTime.timestamp().millisecondsSinceEpoch;
-    body?["time"] = time;
-    printDebug("callAPI $path: $body ${DataManager().aratToken}");
+  Future<bool> callAPIFile(String path,Map<String, dynamic> data,File? image) async {
+    final uri = Uri.parse('$kHostURL/api/$path');
+    final request = http.MultipartRequest('POST', uri);
+
+    request.headers.addAll({
+      'Authorization': 'Bearer ${DataManager().aratToken}',
+      'Content-Type': 'multipart/form-data',
+    },);
+    request.fields['data'] = jsonEncode(data);
+    if (image != null) {
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'file', // key backend nhận
+          image.path,
+        ),
+      );
+    }
+    final response = await request.send();
+    final responseBody = await response.stream.bytesToString();
+    printDebug("callAPIFile: ${uri.path} ${request.fields} ${response.statusCode} ${responseBody.toString()}");
+    return response.statusCode == 200;
+  }
+
+
+  Future<Map<String, dynamic>> callAPI(BuildContext? context, String path, TypeAPI typeAPI, Map<String, dynamic>? body, {String sender = "", int timeInput = 0, TypeApiMethod typeAPIMethod = TypeApiMethod.post}) async {
+    // int time = timeInput != 0 ? timeInput : DateTime.timestamp().millisecondsSinceEpoch;
+    // body?["time"] = time;
+    printDebug("callAPI $path ${typeAPIMethod.name}: $body ${DataManager().aratToken}");
     try {
       Map<String, String> headers = DataManager().aratToken.isEmpty
           ? <String, String>{
-              'Access-Control-Allow-Origin': '*',
-              'Accept': '*/*',
-              'Content-Type': 'application/json; charset=UTF-8',
-            }
+        'Access-Control-Allow-Origin': '*',
+        'Accept': '*/*',
+        'Content-Type': 'application/json; charset=UTF-8',
+      }
           : <String, String>{'Access-Control-Allow-Origin': '*', 'Accept': '*/*', 'Content-Type': 'application/json; charset=UTF-8', 'Authorization': "Bearer ${DataManager().aratToken}"};
-      final response = isPostAPI
+      final response = typeAPIMethod == TypeApiMethod.post
           ? await http.post(
-              Uri.parse('$kHostURL/api/v1/$path'),
-              headers: headers,
-              body: jsonEncode(body),
-            )
-          : await http.get(Uri.parse('$kHostURL/api/v1/$path'), headers: headers);
-      printDebug("callAPI Response $path: ${response.statusCode} - '${response.body}'.");
+        Uri.parse('$kHostURL/api/$path'),
+        headers: headers,
+        body: jsonEncode(body),
+      )
+          : (typeAPIMethod == TypeApiMethod.get ? await http.get(Uri.parse('$kHostURL/api/$path'), headers: headers) : await http.delete(Uri.parse('$kHostURL/api/$path'),body: jsonEncode(body), headers: headers));
+      printDebug("callAPI Response ${response.request?.url}: ${response.statusCode} - '${response.body}'.");
       if (response.statusCode == 201) {
         return jsonDecode(response.body) as Map<String, dynamic>;
       } else if (response.statusCode == 200) {
@@ -129,55 +148,132 @@ class APIManager {
     }
   }
 
-  void getLogDevice(BuildContext? context, List<int> listDevices, int pageNumber, String filter, Function callback) {
-    callAPI(context, "$kAPIGetLogInfo?deviceIds=$listDevices&page=$pageNumber&pageSize=20$filter", TypeAPI.getLogInfo, {}, isPostAPI: false).then((value) => {
-          printDebug("Context: $context - ${context?.mounted}"),
-          if (context?.mounted ?? false)
-            {
-              // if (value[kCode] == 200 && value[kMessage]?["data"] != null && countListObject(value[kMessage]?["data"]) > 0)
-              //   {callback(parseListHistoryModel(context, value[kMessage]["data"]), countListObject(value[kMessage]["data"]) == 20)}
-              // else
-              //   {callback([], false)}
-            } else {
-              OverlayLoadingProgress.stop()
-          }
-        });
-  }
-
   void updateUserInfo(BuildContext? context, String userName, Function callback) {
     callAPI(context, "updateUser", TypeAPI.unknown, {"username": userName}).then((data) => {
-          if (data[kCode] == 200) {parseUserData(data[kMessage]), callback(true, null)} else {callback(false, data[kMessage])}
-        });
+      if (data[kCode] == 200) {parseUserData(data[kMessage]), callback(true, null)} else {callback(false, data[kMessage])}
+    });
   }
 
   void updateHomeInfo(BuildContext? context, String homeName, int homeId, Function callback) {
     callAPI(context, kUpdateHomeInfo, TypeAPI.unknown, {kId: homeId, kName: homeName}).then((data) => {
-          if (data[kCode] == 200) {callback(true, null)} else {callback(false, data[kMessage])}
-        });
+      if (data[kCode] == 200) {callback(true, null)} else {callback(false, data[kMessage])}
+    });
   }
 
   void registerResetAccount(BuildContext? context, String userName, String password, String code, bool isResetPass, Function callback) {
     callAPI(
-            context,
-            isResetPass ? kAPIResetPass : kAPIRegister,
-            TypeAPI.unknown,
-            isValidEmail(userName)
-                ? {kEmail: userName, kOtpCode: code, kPassWord: generateMd5(password, lenght: 16)}
-                : {kPhoneNum: userName, kOtpCode: code, kPassWord: generateMd5(password, lenght: 16)})
+        context,
+        isResetPass ? kAPIResetPass : kAPIRegister,
+        TypeAPI.unknown,
+        isValidEmail(userName)
+            ? {kEmail: userName, kOtpCode: code, kPassWord: generateMd5(password, lenght: 16)}
+            : {kPhoneNum: userName, kOtpCode: code, kPassWord: generateMd5(password, lenght: 16)})
         .then((data) => {
-              if (data[kCode] == 200) {parseAccountInfo(data[kMessage]), callback(true, null)} else {callback(false, data[kMessage])}
-            });
+      if (data[kCode] == 200) {parseAccountInfo(data[kMessage]), callback(true, null)} else {callback(false, data[kMessage])}
+    });
   }
 
   void parseAccountInfo(Map<String, dynamic> data) {
     if (data.containsKey(kToken) && (data[kToken] is String)) {
       DataManager().aratToken = data[kToken];
     }
-
-    if (data.containsKey(kUser) && (data[kUser] is Map<String, dynamic>)) {
-      Map<String, dynamic> mapUser = data[kUser];
-      parseUserData(mapUser);
+    if (data.containsKey(kRefreshToken) && (data[kRefreshToken] is String)) {
+      DataManager().aratRefreshToken = data[kRefreshToken];
     }
+    DataManager().userModel = null;
+    if (data.containsKey("user") && !mapEmpty(data["user"])) {
+      DataManager().userModel = UserModel.fromJson(data["user"]);
+    }
+  }
+
+  void getAllMenus(BuildContext? context, String dateTime, Function callBack) {
+    callAPI(context, "menus?from=$dateTime&to=$dateTime", TypeAPI.getLogInfo, {}, typeAPIMethod: TypeApiMethod.get).then((value) => {
+      printDebug("Context: $context - ${context?.mounted}"),
+      if (context?.mounted ?? false)
+        {
+          if (value[kCode] == 200 && countListObject(value[kMessage]) > 0)
+            {
+              callBack((value[kMessage] as List? ?? [])
+                  .map((e) => MenuModel.fromJson(e))
+                  .toList())}
+          else
+            {callBack([])}
+        } else {
+        OverlayLoadingProgress.stop()
+      }
+    });
+  }
+
+  void getMealReports(BuildContext? context, String dateTime, Function callBack) {
+    callAPI(context, "mealReports?from=$dateTime&to=$dateTime", TypeAPI.getLogInfo, {}, typeAPIMethod: TypeApiMethod.get).then((value) => {
+      printDebug("Context: $context - ${context?.mounted}"),
+      if (context?.mounted ?? false)
+        {
+          if (value[kCode] == 200 && !mapEmpty(value[kMessage]) && countListObject(value[kMessage]["data"]) > 0)
+            {
+              callBack((value[kMessage]["data"] as List? ?? [])
+                  .map((e) => MealReportModel.fromJson(e))
+                  .toList())}
+          else
+            {callBack([])}
+        } else {
+        OverlayLoadingProgress.stop()
+      }
+    });
+  }
+
+  void requestMeal(BuildContext? context, String meal, String dateTime, int quantity, Function callBack) {
+    callAPI(context, "mealReports/report", TypeAPI.getLogInfo, {"meal": meal,"reportDate" : dateTime, "quantity" : quantity}).then((value) => {
+      printDebug("Context: $context - ${context?.mounted}"),
+      if (context?.mounted ?? false)
+        {
+          if (value[kCode] == 200 && !mapEmpty(value[kMessage]))
+            {
+              callBack(MealReportModel.fromJson(value[kMessage]))}
+          else
+            {callBack(null)}
+        } else {
+        OverlayLoadingProgress.stop()
+      }
+    });
+  }
+
+  void updateMeal(BuildContext? context,int requestId, Map<String, dynamic> updateMeal, Function callBack) {
+    callAPI(context, "mealReports/$requestId", TypeAPI.getLogInfo, updateMeal).then((value) => {
+      printDebug("Context: $context - ${context?.mounted}"),
+      if (context?.mounted ?? false)
+        {
+          if (value[kCode] == 200 && !mapEmpty(value[kMessage]))
+            {
+              callBack(MealReportModel.fromJson(value[kMessage]))}
+          else
+            {callBack(null)}
+        } else {
+        OverlayLoadingProgress.stop()
+      }
+    });
+  }
+
+  void deleteMeal(BuildContext? context,int requestId, int quantity, Function callBack) {
+    callAPI(context, "mealReports/$requestId", TypeAPI.getLogInfo, {},typeAPIMethod: TypeApiMethod.delete).then((value) => {
+      callBack(value[kCode] == 200)
+    });
+  }
+
+  void detailMealRequest(BuildContext? context, int reportId, Function callBack) {
+    callAPI(context, "mealReports/$reportId", TypeAPI.getLogInfo, {}, typeAPIMethod: TypeApiMethod.get).then((value) => {
+      printDebug("Context: $context - ${context?.mounted}"),
+      if (context?.mounted ?? false)
+        {
+          if (value[kCode] == 200 && !mapEmpty(value[kMessage]))
+            {
+              callBack(MealReportModel.fromJson(value[kMessage]))}
+          else
+            {callBack(null)}
+        } else {
+        OverlayLoadingProgress.stop()
+      }
+    });
   }
 
   void parseUserData(Map<String, dynamic> mapUser) {
@@ -198,10 +294,10 @@ class APIManager {
   void loginAccount(BuildContext? context, String userName, String password, Function callback) {
     printDebug("refreshToken loginAccount: $userName - $password");
     callAPI(context, kAPILogin, TypeAPI.unknown,
-            isValidEmail(userName) ? {kEmail: userName, kPassWord: generateMd5(password, lenght: 16)} : {kPhoneNum: userName, kPassWord: generateMd5(password, lenght: 16)})
+        {kUsername: userName, kPassWord: password})
         .then((data) => {
-              if (data[kCode] == 200) {parseAccountInfo(data[kMessage]), callback(true, null)} else {callback(false, data[kMessage])}
-            });
+      if (data[kCode] == 200) {parseAccountInfo(data[kMessage]), callback(true, null)} else {callback(false, data[kMessage])}
+    });
   }
 
   void requestCodeOTP(BuildContext? context, String userName, Function callback, {bool isResetPass = false}) {
@@ -219,8 +315,8 @@ class APIManager {
         kUserDetail: {kName: oldAccount},
       },
     ).then((value) => {
-          if (value[kCode] == 200 && value[kMessage] != null) {callback(true)} else {callback(false)}
-        });
+      if (value[kCode] == 200 && value[kMessage] != null) {callback(true)} else {callback(false)}
+    });
   }
 
   void handleToken(BuildContext? context, Map<String, dynamic> value, Function callback) {

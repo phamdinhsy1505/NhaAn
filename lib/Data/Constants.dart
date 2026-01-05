@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 
 // const bool kDebugMode = true;
 const String kVersionInfo = "V1.5.0";
-const bool kIsDevEnv = false;
-const String kHostURL = kIsDevEnv ? "http://14.225.192.248:8111" : "https://aiotech-api.io.vn";
-
-const String kAPIRegister = "auth/register";
-const String kAPIResetPass = "auth/resetPassword";
+const bool kIsDevEnv = true;
+const String kHostURL = kIsDevEnv ? "http://14.225.192.248:8002" : "https://aiotech-api.io.vn";
+const String kNameApp = "Mầm non Z121";
+const String kAPIRegister = "register";
+const String kAPIResetPass = "resetPassword";
 const String kAPIRequestOTP = "otp/request";
 const String kAPIRequestOTA = "updateOTA";
-const String kAPILogin = "auth/login";
+const String kAPILogin = "login";
 const String kAPIUserInfo = "user/info";
 const String kApiDeleteDevice = "deleteDevice";
 const String kApiDeleteHome = "deleteHome";
@@ -21,6 +21,7 @@ const String kApiLinkDevice = "linkDevice";
 const String kApiRunScene = "runScene";
 const String kApiEnableDisableScene = "enableDisableScene";
 const String kEmail = "email";
+const String kUsername = "username";
 const String kPhoneNum = "phoneNumber";
 const String kPassWord = "password";
 const String kOtpCode = "otpCode";
@@ -35,6 +36,7 @@ const String kUserId = "userId";
 const String kHomes = "homes";
 const String kName = "n";
 const String kToken = "token";
+const String kRefreshToken = "refreshToken";
 const String kActive = "isActive";
 const String kMergeDevices = "mDevices";
 const String kFirmWares = "firmwares";
@@ -174,6 +176,16 @@ const String kNotifyUpdateListMembers = "updateListMembers";
 const String kOnOffline = "onOffline";
 const String kDefaultGW = "0a00";
 
+const String kRoleSuperadmin = "superadmin";
+const String kRoleAdmin      = "admin";
+const String kRoleEnterprise = "enterprise";
+const String kMealBreakfast  = "breakfast";
+const String kMealLunch      = "lunch";
+const String kMealDinner     = "dinner";
+const String kStatusPending    = "pending";
+const String kStatusAccepted   = "accepted";
+const String kStatusRejected   = "rejected";
+
 const int kEntityTypeDelay = 0;
 const int kEntityTypeDevice = 1;
 const int kEntityTypeTimer = 2;
@@ -238,14 +250,19 @@ const int kSceneTypeBLE = 0;
 const int kSceneTypeHC = 1;
 const int kSceneTypeDevice = 2;
 
-enum MealStatus { pending, approved, rejected }
-
 // ENUM
+
+enum TypeApiMethod {
+  get,post,delete
+}
+
 enum SettingMode { normal, admin, agency }
 
 enum TypeLogin { login, register, forgotPass }
 
 enum ActionConditionType { unknown, action, condition, actionCondition }
+
+enum ActionHomeType {studentProfile,mealFee,requestLeave,checkIn,checkOut,}
 
 enum ActionSettingType {
   settingMode,
@@ -572,6 +589,8 @@ enum TypeVisualDevice {
   curtainGate,
 }
 
+enum MealStatus { pending, approved, rejected }
+
 enum TypeRoom { unknown, floor, room, flat }
 
 enum TypeSelectDP {
@@ -647,3 +666,4 @@ enum TypeAPI {
   sendNotify,
   deleteAccount
 }
+

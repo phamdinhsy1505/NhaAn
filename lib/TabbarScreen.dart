@@ -21,7 +21,7 @@ class _TabbarScreenState extends State<TabbarScreen> {
 
   // Các màn hình của từng tab – sẽ KHÔNG bị reload do IndexedStack
   final List<Widget> _screens = [
-    const MealReportScreen(),
+    MealReportScreen(),
     StatisticScreen(),
     SettingScreen(),
   ];

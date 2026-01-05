@@ -246,20 +246,21 @@ bool isValidEmail(String? email) {
 }
 
 String convertPhoneNumber(String phoneNumber) {
-  if (isValidEmail(phoneNumber)) {
-    return phoneNumber;
-  }
-  if (phoneNumber[0] == "+") {
-    return phoneNumber;
-  } else {
-    if (phoneNumber[0] == '0') {
-      return phoneNumber.replaceFirst('0', '+84');
-    } else if (phoneNumber.substring(0, 2) == '84') {
-      return "+$phoneNumber";
-    } else {
-      return "+84$phoneNumber";
-    }
-  }
+  return phoneNumber;
+  // if (isValidEmail(phoneNumber)) {
+  //   return phoneNumber;
+  // }
+  // if (phoneNumber[0] == "+") {
+  //   return phoneNumber;
+  // } else {
+  //   if (phoneNumber[0] == '0') {
+  //     return phoneNumber.replaceFirst('0', '+84');
+  //   } else if (phoneNumber.substring(0, 2) == '84') {
+  //     return "+$phoneNumber";
+  //   } else {
+  //     return "+84$phoneNumber";
+  //   }
+  // }
 }
 
 bool isValidPhone(String? phone) {

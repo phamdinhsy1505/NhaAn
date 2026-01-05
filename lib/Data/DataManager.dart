@@ -3,6 +3,7 @@ import 'dart:io';
 // import 'package:platform_device_id_v2/platform_device_id_v2.dart';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:nhakhach/Data/DataModel.dart';
 import 'package:uuid/uuid.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter/cupertino.dart';
@@ -42,6 +43,7 @@ class DataManager {
   String firebaseMessageToken = "";
   bool isLoadingData = false;
   bool isHasNetwork = true;
+  UserModel? userModel;
 
   factory DataManager() {
     return _instance;

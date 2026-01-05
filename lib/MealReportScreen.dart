@@ -1,10 +1,43 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:intl/intl.dart';
+import 'package:nhakhach/Data/DataModel.dart';
 
+import 'Common/OverlayLoadingProgress.dart';
+import 'Data/APIManager.dart';
 import 'Data/Constants.dart';
+import 'Data/Functions.dart';
 
 
-class MealReportScreen extends StatelessWidget {
-  const MealReportScreen({super.key});
+class MealReportScreen extends StatefulWidget {
+
+  @override
+  State<MealReportScreen> createState() => _MealReportScreenState();
+}
+
+class _MealReportScreenState extends State<MealReportScreen> {
+  List<MealReportModel> listMealReport = [];
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    SchedulerBinding.instance.addPostFrameCallback((_) async {
+      OverlayLoadingProgress.start(context);
+      loadData();
+    });
+  }
+
+  void loadData() {
+    APIManager().getMealReports(context, DateFormat('yyyy-MM-dd').format(DateTime.now()), (data) {
+      OverlayLoadingProgress.stop();
+      if (countListObject(data) > 0) {
+        setState(() {
+          listMealReport = data;
+        });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,49 +47,22 @@ class MealReportScreen extends StatelessWidget {
         backgroundColor: Colors.blue,
         child: const Icon(Icons.add),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 0,
-        selectedItemColor: Colors.blue,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Báo ăn',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart),
-            label: 'Thống kê',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Tài khoản',
-          ),
-        ],
+      appBar: AppBar(
+        title: Text("Báo ăn"),
       ),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: const [
-            FilterCard(),
-            SizedBox(height: 16),
-            MealItem(
-              status: MealStatus.pending,
-              quantity: 45,
-              meal: 'Trưa',
-              note: 'Cần xác nhận lại số lượng',
-            ),
-            MealItem(
-              status: MealStatus.approved,
-              quantity: 32,
-              meal: 'Sáng',
-            ),
-            MealItem(
-              status: MealStatus.rejected,
-              quantity: 32,
-              meal: 'Sáng',
-              note: 'Lý do từ chối: báo trễ giờ',
-            ),
-          ],
-        ),
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: listMealReport.length,
+            itemBuilder: (_, index) {
+              MealReportModel reportModel = listMealReport[index];
+              return MealItem(reportModel: reportModel);
+          }),
+        )
       ),
     );
   }
@@ -142,18 +148,22 @@ class FilterCard extends StatelessWidget {
 }
 
 class MealItem extends StatelessWidget {
-  final MealStatus status;
-  final int quantity;
-  final String meal;
-  final String? note;
+  final MealReportModel reportModel;
 
   const MealItem({
     super.key,
-    required this.status,
-    required this.quantity,
-    required this.meal,
-    this.note,
+    required this.reportModel,
   });
+
+  String convertMeal () {
+    if (reportModel.meal == kMealBreakfast) {
+      return "Sáng";
+    } else if (reportModel.meal == kMealLunch) {
+      return "Trưa";
+    } else {
+      return "Tối";
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -178,29 +188,29 @@ class MealItem extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Xí nghiệp A',
+                     Text(
+                      reportModel.username,
                       style:
                       TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
-                    Text('Số lượng: $quantity • Bữa: $meal'),
+                    Text('Số lượng: ${reportModel.quantity} • Bữa: ${convertMeal()}'),
                   ],
                 ),
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  const Text('14/10/2025'),
+                  Text(DateFormat("dd/MM/yyyy").format(reportModel.reportedAt)),
                   const SizedBox(height: 6),
                   _statusBadge(),
                 ],
               ),
             ],
           ),
-          if (note != null) ...[
+          if (!stringEmpty(reportModel.rejectReason)) ...[
             const SizedBox(height: 8),
             Text(
-              note!,
+              reportModel.rejectReason,
               style: const TextStyle(color: Colors.grey),
             ),
           ],
@@ -210,12 +220,12 @@ class MealItem extends StatelessWidget {
   }
 
   Widget _statusBadge() {
-    switch (status) {
-      case MealStatus.pending:
+    switch (reportModel.status) {
+      case kStatusPending:
         return _badge('Chờ duyệt', Colors.orange.shade100, Colors.orange);
-      case MealStatus.approved:
+      case kStatusAccepted:
         return _badge('Đã duyệt', Colors.green.shade100, Colors.green);
-      case MealStatus.rejected:
+      default :
         return _badge('Từ chối', Colors.red.shade100, Colors.red);
     }
   }
