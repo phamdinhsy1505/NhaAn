@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:intl/intl.dart';
+import 'package:nhakhach/Common/notification_center.dart';
 import 'package:nhakhach/Data/DataModel.dart';
+import 'package:nhakhach/RequestMealScreen.dart';
 
 import 'Common/OverlayLoadingProgress.dart';
 import 'Data/APIManager.dart';
@@ -22,6 +24,10 @@ class _MealReportScreenState extends State<MealReportScreen> {
   void initState() {
     // TODO: implement initState
     super.initState();
+    NotificationCenter().subscribe("reloadListMeal", (data){
+      OverlayLoadingProgress.start(context);
+      loadData();
+    });
     SchedulerBinding.instance.addPostFrameCallback((_) async {
       OverlayLoadingProgress.start(context);
       loadData();
@@ -43,7 +49,14 @@ class _MealReportScreenState extends State<MealReportScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => RequestMealScreen(),
+            ),
+          );
+        },
         backgroundColor: Colors.blue,
         child: const Icon(Icons.add),
       ),
@@ -55,7 +68,10 @@ class _MealReportScreenState extends State<MealReportScreen> {
           margin: const EdgeInsets.symmetric(horizontal: 16),
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
-          child: ListView.builder(
+          child: ListView.separated(
+            separatorBuilder: ( context, index){
+              return Divider(thickness: 0.2,);
+            },
             shrinkWrap: true,
             itemCount: listMealReport.length,
             itemBuilder: (_, index) {
@@ -167,54 +183,71 @@ class MealItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const CircleAvatar(
-                backgroundColor: Color(0xFFEAF2FF),
-                child: Icon(Icons.factory, color: Colors.blue),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    return GestureDetector(
+      onTap: (){
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => RequestMealScreen(mealReportModel: reportModel,),
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const CircleAvatar(
+                  backgroundColor: Color(0xFFEAF2FF),
+                  child: Icon(Icons.factory, color: Colors.blue),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                       Text(
+                        reportModel.username,
+                        style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                      Text('Số lượng: ${reportModel.quantity} • Bữa: ${convertMeal()}'),
+                    ],
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                     Text(
-                      reportModel.username,
-                      style:
-                      TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                    ),
-                    Text('Số lượng: ${reportModel.quantity} • Bữa: ${convertMeal()}'),
+                    Text(DateFormat("dd/MM/yyyy").format(reportModel.reportedAt)),
+                    const SizedBox(height: 6),
+                    _statusBadge(),
                   ],
                 ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(DateFormat("dd/MM/yyyy").format(reportModel.reportedAt)),
-                  const SizedBox(height: 6),
-                  _statusBadge(),
-                ],
+              ],
+            ),
+            if (!stringEmpty(reportModel.rejectReason)) ...[
+              const SizedBox(height: 8),
+              Text(
+                reportModel.rejectReason,
+                style: const TextStyle(color: Colors.grey),
               ),
             ],
-          ),
-          if (!stringEmpty(reportModel.rejectReason)) ...[
-            const SizedBox(height: 8),
-            Text(
-              reportModel.rejectReason,
-              style: const TextStyle(color: Colors.grey),
-            ),
+            if (countListObject(reportModel.histories) > 0)...[
+              const SizedBox(height: 8),
+              Text(
+                reportModel.histories.last.content,
+                style: const TextStyle(color: Colors.grey),
+              ),
+            ]
           ],
-        ],
+        ),
       ),
     );
   }

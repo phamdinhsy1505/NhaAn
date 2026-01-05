@@ -254,7 +254,7 @@ class APIManager {
     });
   }
 
-  void deleteMeal(BuildContext? context,int requestId, int quantity, Function callBack) {
+  void deleteMeal(BuildContext? context,int requestId, Function callBack) {
     callAPI(context, "mealReports/$requestId", TypeAPI.getLogInfo, {},typeAPIMethod: TypeApiMethod.delete).then((value) => {
       callBack(value[kCode] == 200)
     });

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 // const bool kDebugMode = true;
 const String kVersionInfo = "V1.5.0";
 const bool kIsDevEnv = true;
-const String kHostURL = kIsDevEnv ? "http://14.225.192.248:8002" : "https://aiotech-api.io.vn";
+const String kHostURL = kIsDevEnv ? "http://14.225.192.248:8003" : "https://aiotech-api.io.vn";
 const String kNameApp = "Mầm non Z121";
 const String kAPIRegister = "register";
 const String kAPIResetPass = "resetPassword";

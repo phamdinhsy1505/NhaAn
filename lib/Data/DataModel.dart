@@ -26,14 +26,14 @@ class UserModel {
   /// FROM JSON
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      id: json['id'] as int,
+      id: (json['id'] as int?) ?? 0,
       username: json['username'] ?? '',
       name: json['name'] ?? '',
       email: json['email'] ?? '',
       phone: json['phone'] ?? '',
       role: json['role'] ?? '',
-      enterpriseID: json['enterpriseID'] as int,
-      isActive: json['isActive'] as bool,
+      enterpriseID: (json['enterpriseID'] as int?) ?? 0,
+      isActive: (json['isActive'] as bool?) ?? false,
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),
     );
@@ -81,15 +81,15 @@ class FoodModel {
 
   factory FoodModel.fromJson(Map<String, dynamic> json) {
     return FoodModel(
-      id: json['id'] as int,
+      id: (json['id'] as int?) ?? 0,
       name: json['name'] ?? '',
       unit: json['unit'] ?? '',
-      price: (json['price'] as num).toDouble(),
-      protein: (json['protein'] as num).toDouble(),
-      carbs: (json['carbs'] as num).toDouble(),
-      fat: (json['fat'] as num).toDouble(),
-      calories: (json['calories'] as num).toDouble(),
-      quantity: (json['quantity'] as num).toDouble(),
+      price: (json['price'] as num?)?.toDouble() ?? 0,
+      protein: (json['protein'] as num?)?.toDouble() ?? 0,
+      carbs: (json['carbs'] as num?)?.toDouble() ?? 0,
+      fat: (json['fat'] as num?)?.toDouble() ?? 0,
+      calories: (json['calories'] as num?)?.toDouble() ?? 0,
+      quantity: (json['quantity'] as num?)?.toDouble() ?? 0,
     );
   }
 
@@ -129,11 +129,11 @@ class MenuModel {
 
   factory MenuModel.fromJson(Map<String, dynamic> json) {
     return MenuModel(
-      id: json['id'] as int,
+      id: (json['id'] as int?) ?? 0,
       meal: json['meal'] ?? '',
       menuDate: DateTime.parse(json['menuDate']),
-      totalCost: (json['totalCost'] as num).toDouble(),
-      totalCalories: (json['totalCalories'] as num).toDouble(),
+      totalCost: (json['totalCost'] as num?)?.toDouble() ?? 0,
+      totalCalories: (json['totalCalories'] as num?)?.toDouble() ?? 0,
       createdAt: DateTime.parse(json['createdAt']),
       foods: (json['foods'] as List<dynamic>? ?? [])
           .map((e) => FoodModel.fromJson(e))
@@ -171,9 +171,9 @@ class MealReportHistoryModel {
 
   factory MealReportHistoryModel.fromJson(Map<String, dynamic> json) {
     return MealReportHistoryModel(
-      id: json['id'] as int,
-      mealReportID: json['mealReportID'] as int,
-      userID: json['userID'] as int,
+      id: (json['id'] as int?) ?? 0,
+      mealReportID: (json['mealReportID'] as int?) ?? 0,
+      userID: (json['userID'] as int?) ?? 0,
       content: json['content'] ?? '',
       createdAt: DateTime.parse(json['createdAt']),
     );
@@ -192,14 +192,14 @@ class MealReportHistoryModel {
 
 class MealReportModel {
   final int id;
-  final String meal;
+  String meal;
   final int userID;
   final String username;
   final DateTime reportDate;
-  final int quantity;
+  int quantity;
   final String status;
   final String rejectReason;
-  final DateTime reportedAt;
+  DateTime reportedAt;
   final List<MealReportHistoryModel> histories;
 
   MealReportModel({
@@ -217,15 +217,15 @@ class MealReportModel {
 
   factory MealReportModel.fromJson(Map<String, dynamic> json) {
     return MealReportModel(
-      id: json['id'] as int,
+      id: (json['id'] as int?) ?? 0,
       username: json['username'] ?? "",
       meal: json['meal'] ?? '',
-      userID: json['userID'] as int,
-      reportDate: DateTime.parse(json['reportDate']),
-      quantity: json['quantity'] as int,
+      userID: (json['userID'] as int?) ?? 0,
+      reportDate: json['reportDate'] == null ? DateTime.now() : DateTime.parse(json['reportDate']),
+      quantity: (json['quantity'] as int?) ?? 1,
       status: json['status'] ?? '',
       rejectReason: json['rejectReason'] ?? '',
-      reportedAt: DateTime.parse(json['reportedAt']),
+      reportedAt:json['reportedAt'] == null ? DateTime.now() : DateTime.parse(json['reportedAt']),
       histories: (json['histories'] as List<dynamic>? ?? [])
           .map((e) => MealReportHistoryModel.fromJson(e))
           .toList(),
