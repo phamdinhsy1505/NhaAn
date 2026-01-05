@@ -148,6 +148,20 @@ class _RequestMealScreenState extends State<RequestMealScreen> {
                             isShadow: false),
                       ],
                     ),
+                    if (currentReportModel.histories.isNotEmpty)...[
+                      Text("Trạng thái yêu cầu:"),
+                      ListView.separated(
+                          separatorBuilder: ( context, index){
+                            return Divider(thickness: 0.2,);
+                          },
+                          physics: const NeverScrollableScrollPhysics(),
+                          shrinkWrap: true,
+                          itemCount: currentReportModel.histories.length,
+                          itemBuilder: (_, index) {
+                            MealReportHistoryModel historyModel = currentReportModel.histories[index];
+                            return HistoryItem(historyModel: historyModel);
+                          }),
+                    ]
                   ],
                 ),
               ),
@@ -307,4 +321,49 @@ class _NumberInputState extends State<NumberInput> {
     );
   }
 }
+
+class HistoryItem extends StatelessWidget {
+  final MealReportHistoryModel historyModel;
+
+  const HistoryItem({
+    super.key,
+    required this.historyModel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          const CircleAvatar(
+            backgroundColor: Color(0xFFEAF2FF),
+            child: Icon(Icons.timer, color: Colors.blue),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  historyModel.username,
+                  style:
+                  TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                Text(historyModel.content),
+              ],
+            ),
+          ),
+          Text(DateFormat("hh:mm dd/MM/yyyy").format(historyModel.createdAt)),
+        ],
+      ),
+    );
+  }
+}
+
 

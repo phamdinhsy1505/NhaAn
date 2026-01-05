@@ -623,7 +623,7 @@ void showAlertListInputDialog(BuildContext context, List<String> currentValues,
                                               child: Text(
                                                 index != listButtons.length - 1
                                                     ? listButtons[index]
-                                                    : "Huỷ bỏ",
+                                                    : "Quay lại",
                                                 style: TextStyle(
                                                     height: 1.3,
                                                     color: index !=

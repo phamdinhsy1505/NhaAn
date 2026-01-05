@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:intl/intl.dart';
 import 'package:nhakhach/Common/notification_center.dart';
+import 'package:nhakhach/Data/DataManager.dart';
 import 'package:nhakhach/Data/DataModel.dart';
 import 'package:nhakhach/RequestMealScreen.dart';
 
@@ -185,12 +186,29 @@ class MealItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: (){
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => RequestMealScreen(mealReportModel: reportModel,),
-          ),
-        );
+        if (DataManager().userModel != null && DataManager().userModel!.role != kRoleEnterprise) {
+          showAlertListInputDialog(context, [""], (values, index){
+            if (index != 1) {
+              OverlayLoadingProgress.start(context);
+              APIManager().updateMeal(context, reportModel.id, {"status": index == -1 ? "accepted" : "rejected","rejectReason": values?.first ?? ""}, (data){
+                OverlayLoadingProgress.stop();
+                if (data != null) {
+                  NotificationCenter().notify("reloadListMeal");
+                  showNotifyMessage(null, "Gửi yêu cầu thành công!");
+                } else {
+                  showNotifyMessage(context, "Gửi yêu cầu lỗi, vui lòng thử lại sau!");
+                }
+              });
+            }
+          }, listButtons: ["Đồng ý","Từ chối","Quay lại"]);
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => RequestMealScreen(mealReportModel: reportModel,),
+            ),
+          );
+        }
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
@@ -239,7 +257,7 @@ class MealItem extends StatelessWidget {
                 style: const TextStyle(color: Colors.grey),
               ),
             ],
-            if (countListObject(reportModel.histories) > 0)...[
+            if (countListObject(reportModel.histories) > 0 && reportModel.histories.last.content.isNotEmpty)...[
               const SizedBox(height: 8),
               Text(
                 reportModel.histories.last.content,

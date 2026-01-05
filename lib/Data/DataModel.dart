@@ -158,6 +158,7 @@ class MealReportHistoryModel {
   final int id;
   final int mealReportID;
   final int userID;
+  final String username;
   final String content;
   final DateTime createdAt;
 
@@ -165,6 +166,7 @@ class MealReportHistoryModel {
     required this.id,
     required this.mealReportID,
     required this.userID,
+    required this.username,
     required this.content,
     required this.createdAt,
   });
@@ -175,6 +177,7 @@ class MealReportHistoryModel {
       mealReportID: (json['mealReportID'] as int?) ?? 0,
       userID: (json['userID'] as int?) ?? 0,
       content: json['content'] ?? '',
+      username: json['username'] ?? '',
       createdAt: DateTime.parse(json['createdAt']),
     );
   }
@@ -185,6 +188,7 @@ class MealReportHistoryModel {
       'mealReportID': mealReportID,
       'userID': userID,
       'content': content,
+      'username' : username,
       'createdAt': createdAt.toIso8601String(),
     };
   }
