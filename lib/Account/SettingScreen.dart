@@ -28,7 +28,6 @@ class ActionSetting {
 
 class _SettingScreenState extends State<SettingScreen> {
   List<ActionSetting> listActions = [];
-  String passTest = "";
 
   @override
   void initState() {
@@ -44,9 +43,6 @@ class _SettingScreenState extends State<SettingScreen> {
     listActions.clear();
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     String currentAccount = sharedPreferences.getString("username") ?? "";
-    passTest = sharedPreferences.getString(currentAccount.trim()) ?? "";
-    passTest = generateMd5(passTest, lenght: 16);
-    listActions.add(ActionSetting("Biệt danh: ${DataManager().userName} - ${DataManager().userAccount}", ActionSettingType.nameDisplay));
     listActions.add(ActionSetting("Thay đổi mật khẩu", ActionSettingType.changePass));
     listActions.add(ActionSetting("Xoá tài khoản", ActionSettingType.deleteAccount));
     listActions.add(ActionSetting("Đăng xuất", ActionSettingType.logout));
@@ -132,22 +128,10 @@ class _SettingScreenState extends State<SettingScreen> {
                       }, context);
                     } else if (listActions[index].typeAction == ActionSettingType.deleteAccount) {
                       showAlertDialog("Bạn có chắc chắn muốn xoá tài khoản? Tài khoản bị xoá sẽ không thể được phục hồi!", ["Xoá"], (index) {
-                        if (index != -1) {}
-                      }, context);
-                    } else if (listActions[index].typeAction == ActionSettingType.nameDisplay) {
-                      showAlertListInputDialog(context, [DataManager().userName], (newData, index) {
-                        if (countListObject(newData) == 1) {
-                          APIManager().updateUserInfo(context, newData![0].trim(), (isSuccess, message) {
-                            if (isSuccess) {
-                              setState(() {
-                                listActions[0].name = "Biệt danh: ${DataManager().userName} - ${DataManager().userAccount}";
-                              });
-                            } else {
-                              showNotifyMessage(context, message);
-                            }
-                          });
+                        if (index != -1) {
+
                         }
-                      });
+                      }, context);
                     } else if (listActions[index].typeAction == ActionSettingType.changePass) {
                       Navigator.push(context, MaterialPageRoute(builder: (context) => const ChangePassScreen()));
                     }
@@ -160,7 +144,7 @@ class _SettingScreenState extends State<SettingScreen> {
             ),
             Center(
               child: Text(
-                "$kVersionInfo - $passTest",
+                kVersionInfo,
                 style: TextStyle(height: 1.3, decoration: TextDecoration.none),
               ),
             ),

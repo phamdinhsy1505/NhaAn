@@ -106,10 +106,6 @@ class APIManager {
             return {kMessage: "Empty", kCode: 404};
           }
         } on FormatException catch (e) {
-          print('The provided string is not valid JSON');
-          if (context != null && context.mounted) {
-            showNotifyMessage(context, "Đã có lỗi xảy ra, vui lòng thử lại sau");
-          }
           printDebug("callAPI $path: $e");
           return {kMessage: e.message, kCode: 502};
         }
@@ -188,69 +184,65 @@ class APIManager {
 
   void getAllMenus(BuildContext? context, String dateTime, Function callBack) {
     callAPI(context, "menus?from=$dateTime&to=$dateTime", TypeAPI.getLogInfo, {}, typeAPIMethod: TypeApiMethod.get).then((value) => {
-      printDebug("Context: $context - ${context?.mounted}"),
-      if (context?.mounted ?? false)
+      if (value[kCode] == 200 && countListObject(value[kMessage]) > 0)
         {
-          if (value[kCode] == 200 && countListObject(value[kMessage]) > 0)
-            {
-              callBack((value[kMessage] as List? ?? [])
-                  .map((e) => MenuModel.fromJson(e))
-                  .toList())}
-          else
-            {callBack([])}
-        } else {
-        OverlayLoadingProgress.stop()
-      }
+          callBack((value[kMessage] as List? ?? [])
+              .map((e) => MenuModel.fromJson(e))
+              .toList())}
+      else
+        {callBack([])}
     });
   }
 
   void getMealReports(BuildContext? context, String dateTime, Function callBack) {
     callAPI(context, "mealReports?from=$dateTime&to=$dateTime", TypeAPI.getLogInfo, {}, typeAPIMethod: TypeApiMethod.get).then((value) => {
-      printDebug("Context: $context - ${context?.mounted}"),
-      if (context?.mounted ?? false)
+      if (value[kCode] == 200 && !mapEmpty(value[kMessage]) && countListObject(value[kMessage]["data"]) > 0)
         {
-          if (value[kCode] == 200 && !mapEmpty(value[kMessage]) && countListObject(value[kMessage]["data"]) > 0)
-            {
-              callBack((value[kMessage]["data"] as List? ?? [])
-                  .map((e) => MealReportModel.fromJson(e))
-                  .toList())}
-          else
-            {callBack([])}
-        } else {
-        OverlayLoadingProgress.stop()
-      }
+          callBack((value[kMessage]["data"] as List? ?? [])
+              .map((e) => MealReportModel.fromJson(e))
+              .toList())}
+      else
+        {callBack([])}
+    });
+  }
+
+  void getDetailMealReports(BuildContext? context, int reportId, Function callBack) {
+    callAPI(context, "mealReports/$reportId", TypeAPI.getLogInfo, {}, typeAPIMethod: TypeApiMethod.get).then((value) => {
+      if (value[kCode] == 200 && !mapEmpty(value[kMessage]))
+        {
+          callBack(MealReportModel.fromJson(value[kMessage]))}
+      else
+        {callBack(null)}
     });
   }
 
   void requestMeal(BuildContext? context, String meal, String dateTime, int quantity, Function callBack) {
     callAPI(context, "mealReports/report", TypeAPI.getLogInfo, {"meal": meal,"reportDate" : dateTime, "quantity" : quantity}).then((value) => {
-      printDebug("Context: $context - ${context?.mounted}"),
-      if (context?.mounted ?? false)
+      if (value[kCode] == 200 && !mapEmpty(value[kMessage]))
         {
-          if (value[kCode] == 200 && !mapEmpty(value[kMessage]))
-            {
-              callBack(MealReportModel.fromJson(value[kMessage]))}
-          else
-            {callBack(null)}
-        } else {
-        OverlayLoadingProgress.stop()
-      }
+          callBack(MealReportModel.fromJson(value[kMessage]))}
+      else
+        {callBack(null)}
     });
   }
 
   void updateMeal(BuildContext? context,int requestId, Map<String, dynamic> updateMeal, Function callBack) {
     callAPI(context, "mealReports/$requestId", TypeAPI.getLogInfo, updateMeal).then((value) => {
-      printDebug("Context: $context - ${context?.mounted}"),
-      if (context?.mounted ?? false)
+      if (value[kCode] == 200 && !mapEmpty(value[kMessage]))
         {
-          if (value[kCode] == 200 && !mapEmpty(value[kMessage]))
-            {
-              callBack(MealReportModel.fromJson(value[kMessage]))}
-          else
-            {callBack(null)}
-        } else {
-        OverlayLoadingProgress.stop()
-      }
+          callBack(MealReportModel.fromJson(value[kMessage]))}
+      else
+        {callBack(null)}
+    });
+  }
+
+  void confirmMeal(BuildContext? context,int requestId, Map<String, dynamic> updateMeal, Function callBack) {
+    callAPI(context, "mealReports/confirm/$requestId", TypeAPI.getLogInfo, updateMeal).then((value) => {
+      if (value[kCode] == 200 && !mapEmpty(value[kMessage]))
+        {
+          callBack(MealReportModel.fromJson(value[kMessage]))}
+      else
+        {callBack(null)}
     });
   }
 

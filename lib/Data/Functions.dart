@@ -4,6 +4,8 @@ import 'dart:developer';
 import 'dart:math';
 import 'dart:ui';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../Common/ExtensionWidget.dart';
 import '../Common/OverlayLoadingProgress.dart';
@@ -610,7 +612,7 @@ void showAlertListInputDialog(BuildContext context, List<String> currentValues,
                                     (index) => Padding(
                                           padding: const EdgeInsets.all(8),
                                           child: Container(
-                                            height: heightTextField,
+                                            height: 50,
                                             decoration: BoxDecoration(
                                                 color: index !=
                                                         listButtons.length - 1
@@ -651,7 +653,7 @@ void showAlertListInputDialog(BuildContext context, List<String> currentValues,
                     radius: 24,
                     height: 165 +
                         heightTextField *
-                            (listButtons.length + newValues.length),
+                             newValues.length + listButtons.length * 50,
                     width: 296),
               ),
             ),
@@ -1380,74 +1382,97 @@ void showSelectListItem(BuildContext? context, List<String> listItems,
   );
 }
 
+String formatNumber(num value) {
+  final formatter = NumberFormat('#,###');
+  return formatter.format(value);
+}
+
+String convertMeal (String meal) {
+  if (meal == kMealBreakfast) {
+    return "Sáng";
+  } else if (meal == kMealLunch) {
+    return "Trưa";
+  } else {
+    return "Tối";
+  }
+}
+
 void showNotifyMessage(BuildContext? inputContext, String message,
     {String? debug, Color? color, int timeHidden = 2}) {
-  BuildContext? context = inputContext ?? DataManager().currentContext;
-  if (DataManager().isShowingMessage || context == null || !context.mounted) {
-    printDebug("showNotifyMessage $message");
-    return;
-  }
-  DataManager().isShowingMessage = true;
-  Widget messageUI = Container(
-    decoration: BoxDecoration(
-        color: color ?? kNotiColor,
-        borderRadius: const BorderRadius.only(
-            bottomLeft: Radius.circular(24), bottomRight: Radius.circular(24))),
-    child: SafeArea(
-        top: true,
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              Text(debug == null ? message : "$message - $debug",
-                  style: const TextStyle(
-                      height: 1.3,
-                      color: Colors.white,
-                      fontSize: kSizeTextTitle),
-                  textAlign: TextAlign.center),
-            ],
-          ),
-        )),
+  Fluttertoast.showToast(
+    msg: message,
+    toastLength: Toast.LENGTH_SHORT,
+    gravity: ToastGravity.CENTER,
+    backgroundColor: Colors.black87,
+    textColor: Colors.white,
+    fontSize: 14,
   );
-  var timer = Timer(Duration(seconds: timeHidden), () {
-    if (DataManager().isShowingMessage && context.mounted) {
-      Navigator.of(context).pop();
-    }
-  });
-  showGeneralDialog(
-    context: context,
-    barrierDismissible: true,
-    useRootNavigator: true,
-    barrierLabel: MaterialLocalizations.of(context).dialogLabel,
-    barrierColor: Colors.black.withOpacity(0.1),
-    pageBuilder: (context, _, __) {
-      return messageUI;
-    },
-    transitionBuilder: (context, animation, secondaryAnimation, child) {
-      return SlideTransition(
-        position: CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)
-            .drive(
-                Tween<Offset>(begin: const Offset(0, -1.0), end: Offset.zero)),
-        child: Column(
-          children: [
-            Material(
-              color: Colors.transparent,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [messageUI],
-              ),
-            )
-          ],
-        ),
-      );
-    },
-  ).then((value) => {
-        if (timer.isActive) {timer.cancel()},
-        DataManager().isShowingMessage = false,
-      });
+  // BuildContext? context = inputContext ?? DataManager().currentContext;
+  // if (DataManager().isShowingMessage || context == null || !context.mounted) {
+  //   printDebug("showNotifyMessage $message");
+  //   return;
+  // }
+  // DataManager().isShowingMessage = true;
+  // Widget messageUI = Container(
+  //   decoration: BoxDecoration(
+  //       color: color ?? kNotiColor,
+  //       borderRadius: const BorderRadius.only(
+  //           bottomLeft: Radius.circular(24), bottomRight: Radius.circular(24))),
+  //   child: SafeArea(
+  //       top: true,
+  //       bottom: false,
+  //       child: Padding(
+  //         padding: const EdgeInsets.all(16),
+  //         child: Column(
+  //           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+  //           crossAxisAlignment: CrossAxisAlignment.stretch,
+  //           children: <Widget>[
+  //             Text(debug == null ? message : "$message - $debug",
+  //                 style: const TextStyle(
+  //                     height: 1.3,
+  //                     color: Colors.white,
+  //                     fontSize: kSizeTextTitle),
+  //                 textAlign: TextAlign.center),
+  //           ],
+  //         ),
+  //       )),
+  // );
+  // var timer = Timer(Duration(seconds: timeHidden), () {
+  //   if (DataManager().isShowingMessage && context.mounted) {
+  //     Navigator.of(context).pop();
+  //   }
+  // });
+  // showGeneralDialog(
+  //   context: context,
+  //   barrierDismissible: true,
+  //   useRootNavigator: true,
+  //   barrierLabel: MaterialLocalizations.of(context).dialogLabel,
+  //   barrierColor: Colors.black.withOpacity(0.1),
+  //   pageBuilder: (context, _, __) {
+  //     return messageUI;
+  //   },
+  //   transitionBuilder: (context, animation, secondaryAnimation, child) {
+  //     return SlideTransition(
+  //       position: CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)
+  //           .drive(
+  //               Tween<Offset>(begin: const Offset(0, -1.0), end: Offset.zero)),
+  //       child: Column(
+  //         children: [
+  //           Material(
+  //             color: Colors.transparent,
+  //             child: Column(
+  //               mainAxisSize: MainAxisSize.min,
+  //               children: [messageUI],
+  //             ),
+  //           )
+  //         ],
+  //       ),
+  //     );
+  //   },
+  // ).then((value) => {
+  //       if (timer.isActive) {timer.cancel()},
+  //       DataManager().isShowingMessage = false,
+  //     });
 }
 
 Map<String, dynamic> deepCopy(Map<String, dynamic> original) {

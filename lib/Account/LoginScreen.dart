@@ -134,7 +134,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   },
                                   decoration: InputDecoration(
                                       border: InputBorder.none,
-                                      hintText: "Nhập email hoặc SĐT",
+                                      hintText: "Nhập tài khoản",
                                       hintStyle: const TextStyle(height: 1.3, color: Colors.grey, fontSize: kSizeTextNormal)),
                                 );
                               },
@@ -242,45 +242,45 @@ class _LoginScreenState extends State<LoginScreen> {
                     // const SizedBox(
                     //   height: 10,
                     // ),
-                    Row(
-                      children: [
-                        TextButton(
-                            onPressed: () {
-                              setState(() {
-                                clearText();
-                                if (typeScreen == TypeLogin.forgotPass) {
-                                  typeScreen = TypeLogin.register;
-                                } else {
-                                  typeScreen = TypeLogin.forgotPass;
-                                }
-                              });
-                            },
-                            child: Text(
-                              typeScreen == TypeLogin.forgotPass ? "Đăng ký?" : "Quên mật khẩu",
-                              style: const TextStyle(height: 1.3, color: kMainColor),
-                            )),
-                        const Spacer(),
-                        // TextButton(
-                        //     onPressed: () {
-                        //       setState(() {
-                        //         clearText();
-                        //         if (typeScreen == TypeLogin.login) {
-                        //           typeScreen = TypeLogin.register;
-                        //         } else {
-                        //           typeScreen = TypeLogin.login;
-                        //         }
-                        //       });
-                        //     },
-                        //     child: Text(
-                        //       typeScreen == TypeLogin.login ? "Đăng ký" : "Đăng nhập",
-                        //       style: const TextStyle(height: 1.3, color: kMainColor),
-                        //     )),
-                      ],
-                    ),
+                    // Row(
+                    //   children: [
+                    //     TextButton(
+                    //         onPressed: () {
+                    //           setState(() {
+                    //             clearText();
+                    //             if (typeScreen == TypeLogin.forgotPass) {
+                    //               typeScreen = TypeLogin.register;
+                    //             } else {
+                    //               typeScreen = TypeLogin.forgotPass;
+                    //             }
+                    //           });
+                    //         },
+                    //         child: Text(
+                    //           typeScreen == TypeLogin.forgotPass ? "Đăng ký?" : "Quên mật khẩu",
+                    //           style: const TextStyle(height: 1.3, color: kMainColor),
+                    //         )),
+                    //     const Spacer(),
+                    //     // TextButton(
+                    //     //     onPressed: () {
+                    //     //       setState(() {
+                    //     //         clearText();
+                    //     //         if (typeScreen == TypeLogin.login) {
+                    //     //           typeScreen = TypeLogin.register;
+                    //     //         } else {
+                    //     //           typeScreen = TypeLogin.login;
+                    //     //         }
+                    //     //       });
+                    //     //     },
+                    //     //     child: Text(
+                    //     //       typeScreen == TypeLogin.login ? "Đăng ký" : "Đăng nhập",
+                    //     //       style: const TextStyle(height: 1.3, color: kMainColor),
+                    //     //     )),
+                    //   ],
+                    // ),
                     const SizedBox(
                       height: 10,
                     ),
-                    // email va sdt
+                    // // email va sdt
                     containerGradient(
                       width: widthForm,
                       TextButton(

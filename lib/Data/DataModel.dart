@@ -199,14 +199,16 @@ class MealReportModel {
   String meal;
   final int userID;
   final String username;
-  final DateTime reportDate;
+  DateTime reportDate;
   int quantity;
   final String status;
   final String rejectReason;
-  DateTime reportedAt;
+  final DateTime reportedAt;
+  final String lastHistory;
   final List<MealReportHistoryModel> histories;
 
   MealReportModel({
+    required this.lastHistory,
     required this.id,
     required this.username,
     required this.meal,
@@ -223,6 +225,7 @@ class MealReportModel {
     return MealReportModel(
       id: (json['id'] as int?) ?? 0,
       username: json['username'] ?? "",
+      lastHistory: json['lastHistory'] ?? "",
       meal: json['meal'] ?? '',
       userID: (json['userID'] as int?) ?? 0,
       reportDate: json['reportDate'] == null ? DateTime.now() : DateTime.parse(json['reportDate']),
@@ -245,6 +248,7 @@ class MealReportModel {
       'reportDate': reportDate.toIso8601String(),
       'quantity': quantity,
       'status': status,
+      'lastHistory': lastHistory,
       'rejectReason': rejectReason,
       'reportedAt': reportedAt.toIso8601String(),
       'histories': histories.map((e) => e.toJson()).toList(),

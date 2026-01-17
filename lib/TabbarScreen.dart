@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nhakhach/Account/SettingScreen.dart';
+import 'package:nhakhach/MealMenuScreen.dart';
 import 'package:nhakhach/MealReportScreen.dart';
 import 'package:nhakhach/StatisticScreen.dart';
 
@@ -22,7 +23,7 @@ class _TabbarScreenState extends State<TabbarScreen> {
   // Các màn hình của từng tab – sẽ KHÔNG bị reload do IndexedStack
   final List<Widget> _screens = [
     MealReportScreen(),
-    StatisticScreen(),
+    MealMenuScreen(),
     SettingScreen(),
   ];
 

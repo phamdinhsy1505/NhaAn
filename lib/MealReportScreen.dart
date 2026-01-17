@@ -27,6 +27,9 @@ class _MealReportScreenState extends State<MealReportScreen> {
     super.initState();
     NotificationCenter().subscribe("reloadListMeal", (data){
       OverlayLoadingProgress.start(context);
+      setState(() {
+        listMealReport.clear();
+      });
       loadData();
     });
     SchedulerBinding.instance.addPostFrameCallback((_) async {
@@ -48,8 +51,9 @@ class _MealReportScreenState extends State<MealReportScreen> {
 
   @override
   Widget build(BuildContext context) {
+    DataManager().currentContext = context;
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: (DataManager().userModel?.role ?? kRoleAdmin) != kRoleEnterprise ? null : FloatingActionButton(
         onPressed: () {
           Navigator.push(
             context,
@@ -63,23 +67,25 @@ class _MealReportScreenState extends State<MealReportScreen> {
       ),
       appBar: AppBar(
         title: Text("Báo ăn"),
+        actions: [
+          IconButton(onPressed: (){
+            setState(() {
+              listMealReport.clear();
+            });
+            OverlayLoadingProgress.start(context);
+            loadData();
+          }, icon: Icon(Icons.refresh))
+        ],
       ),
       body: SafeArea(
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
-          child: ListView.separated(
-            separatorBuilder: ( context, index){
-              return Divider(thickness: 0.2,);
-            },
-            shrinkWrap: true,
-            itemCount: listMealReport.length,
-            itemBuilder: (_, index) {
-              MealReportModel reportModel = listMealReport[index];
-              return MealItem(reportModel: reportModel);
-          }),
-        )
+        child: ListView.builder(
+          padding: const EdgeInsets.all(16),
+          shrinkWrap: true,
+          itemCount: listMealReport.length,
+          itemBuilder: (_, index) {
+            MealReportModel reportModel = listMealReport[index];
+            return MealItem(reportModel: reportModel);
+        })
       ),
     );
   }
@@ -172,47 +178,20 @@ class MealItem extends StatelessWidget {
     required this.reportModel,
   });
 
-  String convertMeal () {
-    if (reportModel.meal == kMealBreakfast) {
-      return "Sáng";
-    } else if (reportModel.meal == kMealLunch) {
-      return "Trưa";
-    } else {
-      return "Tối";
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: (){
-        if (DataManager().userModel != null && DataManager().userModel!.role != kRoleEnterprise) {
-          showAlertListInputDialog(context, [""], (values, index){
-            if (index != 1) {
-              OverlayLoadingProgress.start(context);
-              APIManager().updateMeal(context, reportModel.id, {"status": index == -1 ? "accepted" : "rejected","rejectReason": values?.first ?? ""}, (data){
-                OverlayLoadingProgress.stop();
-                if (data != null) {
-                  NotificationCenter().notify("reloadListMeal");
-                  showNotifyMessage(null, "Gửi yêu cầu thành công!");
-                } else {
-                  showNotifyMessage(context, "Gửi yêu cầu lỗi, vui lòng thử lại sau!");
-                }
-              });
-            }
-          }, listButtons: ["Đồng ý","Từ chối","Quay lại"]);
-        } else {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => RequestMealScreen(mealReportModel: reportModel,),
-            ),
-          );
-        }
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => RequestMealScreen(mealReportModel: reportModel,),
+          ),
+        );
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -236,14 +215,14 @@ class MealItem extends StatelessWidget {
                         style:
                         TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                       ),
-                      Text('Số lượng: ${reportModel.quantity} • Bữa: ${convertMeal()}'),
+                      Text('Số lượng: ${reportModel.quantity} • Bữa: ${convertMeal(reportModel.meal)}'),
                     ],
                   ),
                 ),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text(DateFormat("dd/MM/yyyy").format(reportModel.reportedAt)),
+                    Text(DateFormat("dd/MM/yyyy").format(reportModel.reportDate.add(const Duration(hours: 7)))),
                     const SizedBox(height: 6),
                     _statusBadge(),
                   ],
@@ -257,7 +236,7 @@ class MealItem extends StatelessWidget {
                 style: const TextStyle(color: Colors.grey),
               ),
             ],
-            if (countListObject(reportModel.histories) > 0 && reportModel.histories.last.content.isNotEmpty)...[
+            if (!stringEmpty(reportModel.lastHistory))...[
               const SizedBox(height: 8),
               Text(
                 reportModel.histories.last.content,

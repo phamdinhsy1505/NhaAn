@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:lunar_calendar_plus/lunar_calendar.dart';
@@ -10,6 +11,7 @@ import 'package:nhakhach/Data/DataModel.dart';
 import '../Data/Functions.dart';
 import 'Common/notification_center.dart';
 import 'Data/Constants.dart';
+import 'Data/DataManager.dart';
 
 class RequestMealScreen extends StatefulWidget {
 
@@ -37,10 +39,60 @@ class _RequestMealScreenState extends State<RequestMealScreen> {
         }
       }
       currentReportModel = MealReportModel.fromJson(widget.mealReportModel!.toJson());
+      SchedulerBinding.instance.addPostFrameCallback((_) async {
+        OverlayLoadingProgress.start(context);
+        loadData();
+      });
     } else {
       currentReportModel = MealReportModel.fromJson({});
     }
   }
+
+  void loadData() {
+    APIManager().getDetailMealReports(context, currentReportModel.id, (data) {
+      OverlayLoadingProgress.stop();
+      if (data is MealReportModel) {
+        setState(() {
+          currentReportModel = MealReportModel.fromJson(data!.toJson());
+        });
+      }
+    });
+  }
+
+  Future<void> pickDateWithLunar(BuildContext context) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 7)),
+    );
+
+    if (picked != null) {
+      setState(() {
+        currentReportModel.reportDate = picked;
+      });
+    }
+  }
+
+  Widget _infoRow(String label, String value) {
+    return GestureDetector(
+      onTap: (){
+        pickDateWithLunar(context);
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(label),
+            SizedBox(width: 32,),
+            Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -52,7 +104,7 @@ class _RequestMealScreenState extends State<RequestMealScreen> {
             color: Colors.black,
             fontWeight: FontWeight.bold,
             fontSize: 15),),
-        actions: widget.mealReportModel == null ? null : [
+        actions: (widget.mealReportModel == null || widget.mealReportModel!.status == "accepted") ? null : [
           IconButton(onPressed: (){
             OverlayLoadingProgress.start(context);
             APIManager().deleteMeal(context, widget.mealReportModel!.id, (data){
@@ -70,24 +122,27 @@ class _RequestMealScreenState extends State<RequestMealScreen> {
       ),
       body: SafeArea(
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    LunarCalendar(
-                      initialSolarDate: DateTime.now(),
-                      showTodayButton: true,
-                      onDateSelected: (solarDate, lunarDate) {
-                        int diffDay = solarDate.difference(DateTime.now()).inDays;
-                        if (diffDay < 7 && diffDay >= 0) {
-                          currentReportModel.reportedAt = solarDate;
-                        }
-                        print('Solar date: $solarDate - ${solarDate.difference(DateTime.now()).inDays}');
-                        print('Lunar date: $lunarDate');
-                      },
-                    ),
+                    // LunarCalendar(
+                    //   initialSolarDate: DateTime.now(),
+                    //   showTodayButton: true,
+                    //   onDateSelected: (solarDate, lunarDate) {
+                    //     int diffDay = solarDate.difference(DateTime.now()).inDays;
+                    //     if (diffDay < 7 && diffDay >= 0) {
+                    //       currentReportModel.reportedAt = solarDate;
+                    //     }
+                    //     print('Solar date: $solarDate - ${solarDate.difference(DateTime.now()).inDays}');
+                    //     print('Lunar date: $lunarDate');
+                    //   },
+                    // ),
+                    _infoRow('Chọn ngày:', '${currentReportModel.reportDate.day}/${currentReportModel.reportDate.month}/${currentReportModel.reportDate.year}'),
                     SizedBox(height: 16,),
                     NumberInput(
                       value: currentReportModel.quantity,
@@ -149,7 +204,11 @@ class _RequestMealScreenState extends State<RequestMealScreen> {
                       ],
                     ),
                     if (currentReportModel.histories.isNotEmpty)...[
-                      Text("Trạng thái yêu cầu:"),
+                      SizedBox(height: 16,),
+                      Align(alignment: Alignment.centerLeft,child: Row(children: [
+                        SizedBox(width: 16,),
+                        Text("Trạng thái yêu cầu:")
+                      ],)),
                       ListView.separated(
                           separatorBuilder: ( context, index){
                             return Divider(thickness: 0.2,);
@@ -173,7 +232,7 @@ class _RequestMealScreenState extends State<RequestMealScreen> {
                 onPressed: () {
                   OverlayLoadingProgress.start(context);
                   if (widget.mealReportModel == null) {
-                    APIManager().requestMeal(context, listMeal[meal], DateFormat("yyyy-MM-dd").format(currentReportModel.reportedAt), currentReportModel.quantity, (data){
+                    APIManager().requestMeal(context, listMeal[meal], DateFormat("yyyy-MM-dd").format(currentReportModel.reportDate.add(const Duration(hours: 7))), currentReportModel.quantity, (data){
                       OverlayLoadingProgress.stop();
                       if (data != null) {
                         Navigator.of(context).pop();
@@ -184,19 +243,37 @@ class _RequestMealScreenState extends State<RequestMealScreen> {
                       }
                     });
                   } else {
-                    APIManager().updateMeal(context, widget.mealReportModel!.id, {"meal": listMeal[meal],"reportDate" : DateFormat("yyyy-MM-dd").format(currentReportModel.reportedAt), "quantity" : currentReportModel.quantity}, (data){
-                      OverlayLoadingProgress.stop();
-                      if (data != null) {
-                        Navigator.of(context).pop();
-                        NotificationCenter().notify("reloadListMeal");
-                        showNotifyMessage(null, "Đã gửi yêu cầu, chờ xác nhận!");
-                      } else {
-                        showNotifyMessage(context, "Gửi yêu cầu lỗi, vui lòng thử lại sau!");
-                      }
-                    });
+                    if (DataManager().userModel != null && DataManager().userModel!.role != kRoleEnterprise) {
+                      showAlertListInputDialog(DataManager().currentContext!, [""], (values, index){
+                        if (index != 1) {
+                          OverlayLoadingProgress.start(DataManager().currentContext!);
+                          APIManager().confirmMeal(DataManager().currentContext!, widget.mealReportModel!.id, {"status": index == -1 ? "accepted" : "rejected","rejectReason": values?.first ?? ""}, (data){
+                            if (data != null) {
+                              Navigator.of(context).pop();
+                              showNotifyMessage(DataManager().currentContext!, "Xác nhận thành công!");
+                              NotificationCenter().notify("reloadListMeal");
+                            } else {
+                              OverlayLoadingProgress.stop();
+                              showNotifyMessage(null, "Xác nhận lỗi, vui lòng thử lại sau!");
+                            }
+                          });
+                        }
+                      }, listButtons: ["Đồng ý","Từ chối","Quay lại"], hintMessages: ["Nhập ghi chú"],titleMessage: "Xác nhận yêu cầu:");
+                    } else {
+                      APIManager().updateMeal(context, widget.mealReportModel!.id, {"meal": listMeal[meal],"reportDate" : DateFormat("yyyy-MM-dd").format(currentReportModel.reportDate.add(const Duration(hours: 7))), "quantity" : currentReportModel.quantity}, (data){
+                        OverlayLoadingProgress.stop();
+                        if (data != null) {
+                          Navigator.of(context).pop();
+                          NotificationCenter().notify("reloadListMeal");
+                          showNotifyMessage(null, "Đã gửi yêu cầu, chờ xác nhận!");
+                        } else {
+                          showNotifyMessage(context, "Gửi yêu cầu lỗi, vui lòng thử lại sau!");
+                        }
+                      });
+                    }
                   }
                 },
-                child: Text("Gửi yêu cầu",
+                child: Text((DataManager().userModel != null && DataManager().userModel!.role != kRoleEnterprise) ? "Xác nhận" : (widget.mealReportModel != null ? "Cập nhật yêu cầu" : "Gửi yêu cầu"),
                   style: TextStyle(
                       height: 1.3,
                       color: Colors.white,
@@ -359,7 +436,7 @@ class HistoryItem extends StatelessWidget {
               ],
             ),
           ),
-          Text(DateFormat("hh:mm dd/MM/yyyy").format(historyModel.createdAt)),
+          Text(DateFormat("hh:mm dd/MM/yyyy").format(historyModel.createdAt.add(const Duration(hours: 7)))),
         ],
       ),
     );
